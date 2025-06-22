@@ -8,6 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="tools\d3dcompiler_43.dll" />
+      <None Remove="tools\fxc.exe" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="tools\d3dcompiler_43.dll" />
+      <EmbeddedResource Include="tools\fxc.exe" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="MonoGame.Framework.Content.Pipeline" Version="3.8.1.303" PrivateAssets="All" />
     </ItemGroup>
 </Project>

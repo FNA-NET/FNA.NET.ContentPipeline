@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using Microsoft.Xna.Framework.Content.Pipeline;
 using Microsoft.Xna.Framework.Content.Pipeline.Graphics;
 using Microsoft.Xna.Framework.Content.Pipeline.Processors;
@@ -11,42 +11,83 @@ namespace FNA.NET.ContentPipeline
     [ContentProcessor(DisplayName = "Effect - Fxc(FNA)")]
     public class FxcEffectProcessor : EffectProcessor
     {
+        static string FxcExePath;
+
+        static void EnsureFxcTool()
+        {
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string fnaToolsFolder = Path.Combine(appDataPath, "FNA.NET", "tools");
+            if (!Directory.Exists(fnaToolsFolder))
+                Directory.CreateDirectory(fnaToolsFolder);
+
+            FxcExePath = Path.Combine(fnaToolsFolder, Resources.FxcExeFileName);
+
+            if (File.Exists(FxcExePath))
+                return;
+
+            File.WriteAllBytes(FxcExePath, Resources.FxcExeBinary);
+            File.WriteAllBytes(Path.Combine(fnaToolsFolder, Resources.D3dcompilerDllFileName), Resources.D3dcompilerBinary);
+        }
+
+        static FxcEffectProcessor()
+        {
+            EnsureFxcTool();
+        }
+
         public override CompiledEffectContent Process(EffectContent input, ContentProcessorContext context)
         {
-            string compiledFile = Path.Combine(
-                Path.GetDirectoryName(input.Identity.SourceFilename),
-                string.Format("{0}.fxc", Path.GetFileNameWithoutExtension(input.Identity.SourceFilename))
-                );
+            string compiledTempFile = Path.GetTempFileName() + ".fxb";
 
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            var defineList = new List<string>();
+            defineList.Add("/D OPENGL");
+            if (!string.IsNullOrEmpty(Defines))
             {
-                if (File.Exists(compiledFile))
+                foreach (var define in Defines.Split(";", StringSplitOptions.TrimEntries))
                 {
-                    return new CompiledEffectContent(File.ReadAllBytes(compiledFile));
+                    if (string.IsNullOrEmpty(define)) continue;
+                    defineList.Add($"/D {define}");
                 }
-
-                throw new InvalidContentException("Compiling on a non-Windows platform requires a precompiled effect!", input.Identity);
             }
-            
-            string compiledTempFile = string.Format("{0}.fxc", Path.GetTempFileName());
 
-            string toolPath = string.Format("{0}\\fxc.exe", Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+            var defineStr = string.Join(" ", defineList);
 
-            Process process = new Process
+            Process process;
+
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                StartInfo = new ProcessStartInfo
+                process = new Process
                 {
-                    FileName = toolPath,
-                    Arguments = string.Format("/T fx_2_0 \"{0}\" /Fo \"{1}\"", input.Identity.SourceFilename, compiledTempFile),
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                }
-            };
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = FxcExePath,
+                        Arguments = string.Format("/nologo /Vd /T fx_2_0 {0} /Fo\"{1}\" \"{2}\"",
+                            defineStr, compiledTempFile, input.Identity.SourceFilename),
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    }
+                };
+            }
+            else
+            {
+                var relativeSourceFilename = Path.GetRelativePath(Environment.CurrentDirectory, input.Identity.SourceFilename);
+                process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "wine",
+                        Arguments = string.Format("{0} /nologo /Vd /T fx_2_0 {1} /Fo\"{2}\" \"{3}\"",
+                            FxcExePath, defineStr, compiledTempFile, relativeSourceFilename),
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    }
+                };
+            }
 
             process.Start();
-
             process.WaitForExit();
 
             if (!File.Exists(compiledTempFile))
@@ -57,9 +98,6 @@ namespace FNA.NET.ContentPipeline
             }
 
             byte[] buffer = File.ReadAllBytes(compiledTempFile);
-
-            File.WriteAllBytes(compiledFile, buffer);
-
             return new CompiledEffectContent(buffer);
         }
     }

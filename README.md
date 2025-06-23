@@ -10,16 +10,15 @@ If you're int non-Windows, you have to install wine to run the fxc.exe tool.
 
 ### (Linux/macOS) Installing Wine
 
-To install Wine and winetricks on **Linux**, refer to your distribution's package database. Typically the package names will simply be `wine` and `winetricks`.
+To install Wine on **Linux**, refer to your distribution's package database. Typically the package names will simply be `wine`.
 
-To install Wine and winetricks on **macOS**:
+To install Wineon **macOS**:
 
 - Install Homebrew from https://brew.sh/
-- Install wine with `brew cask install wine-stable`
-- Install winetricks with `brew install winetricks`
-- (If you already have these installed, update with: `brew update`, `brew upgrade wine-stable`, `brew upgrade winetricks`)
+- Install wine with `brew install --cast wine-stable`
+- (If you already have these installed, update with: `brew update`, `brew upgrade wine-stable`)
 
-Once Wine and winetricks are installed:
+Once Wine is installed:
 
 - Setup Wine with `winecfg`
 

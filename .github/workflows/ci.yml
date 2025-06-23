@@ -1,0 +1,20 @@
+name: Build
+
+on: [push]
+
+jobs:
+  Build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: dotnet build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}.dll
+          path: |
+            bin/*.dll

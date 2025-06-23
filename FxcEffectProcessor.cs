@@ -77,7 +77,7 @@ namespace FNA.NET.ContentPipeline
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "wine",
-                        Arguments = string.Format("{0} /nologo /Vd /T fx_2_0 {1} /Fo\"{2}\" \"{3}\"",
+                        Arguments = string.Format("\"{0}\" /nologo /Vd /T fx_2_0 {1} /Fo\"{2}\" \"{3}\"",
                             FxcExePath, defineStr, compiledTempFile, relativeSourceFilename),
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,

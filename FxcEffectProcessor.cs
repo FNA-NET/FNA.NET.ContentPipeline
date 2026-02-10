@@ -27,6 +27,7 @@ namespace FNA.NET.ContentPipeline
 
             File.WriteAllBytes(FxcExePath, Resources.FxcExeBinary);
             File.WriteAllBytes(Path.Combine(fnaToolsFolder, Resources.D3dcompilerDllFileName), Resources.D3dcompilerBinary);
+            File.WriteAllBytes(Path.Combine(fnaToolsFolder, Resources.D3dx9DllFileName), Resources.D3dx9Binary);
         }
 
         static FxcEffectProcessor()
